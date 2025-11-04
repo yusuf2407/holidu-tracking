@@ -334,11 +334,31 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
       return;
     }
     
-    const searchLower = searchTerm.toLowerCase();
-    const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
+    const searchLower = searchTerm.toLowerCase().trim();
+    if (!searchLower) return;
     
-    // Function to highlight text in a text node
+    const escapedSearch = escapeRegex(searchTerm);
+    const regex = new RegExp(`(${escapedSearch})`, 'gi');
+    
+    // Function to highlight text in a text node (only in value cells, not labels)
     function highlightTextNode(node) {
+      // Only highlight in .mono cells (value cells), not in label cells
+      let cell = node.parentElement;
+      while (cell && cell.tagName !== 'TD') {
+        cell = cell.parentElement;
+      }
+      
+      if (!cell || !cell.classList.contains('mono')) {
+        return; // Don't highlight in label cells
+      }
+      
+      // Skip if already highlighted or in a link
+      if (node.parentElement.tagName === 'A' || 
+          node.parentElement.classList.contains('hidden') ||
+          node.parentElement.classList.contains('highlight')) {
+        return;
+      }
+      
       const text = node.textContent;
       if (!text || text.toLowerCase().indexOf(searchLower) === -1) {
         return;
@@ -347,6 +367,9 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
       const fragment = document.createDocumentFragment();
       let lastIndex = 0;
       let match;
+      
+      // Reset regex lastIndex
+      regex.lastIndex = 0;
       
       while ((match = regex.exec(text)) !== null) {
         // Add text before match
@@ -368,34 +391,39 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
         fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
       }
       
-      node.parentNode.replaceChild(fragment, node);
-    }
-    
-    // Find all text nodes in visible cells (excluding links and hidden elements)
-    const walker = document.createTreeWalker(
-      document.getElementById('content'),
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: function(node) {
-          // Skip text nodes in links, hidden elements, or already highlighted
-          if (node.parentElement.tagName === 'A' || 
-              node.parentElement.classList.contains('hidden') ||
-              node.parentElement.classList.contains('highlight')) {
-            return NodeFilter.FILTER_REJECT;
-          }
-          return NodeFilter.FILTER_ACCEPT;
-        }
+      if (fragment.childNodes.length > 0) {
+        node.parentNode.replaceChild(fragment, node);
       }
-    );
-    
-    const textNodes = [];
-    let node;
-    while (node = walker.nextNode()) {
-      textNodes.push(node);
     }
     
-    // Highlight all text nodes
-    textNodes.forEach(highlightTextNode);
+    // Find all text nodes in visible cells (only in value cells with .mono class)
+    const monoCells = document.querySelectorAll('#content .mono');
+    monoCells.forEach(cell => {
+      const walker = document.createTreeWalker(
+        cell,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: function(node) {
+            // Skip text nodes in links, hidden elements, or already highlighted
+            if (node.parentElement.tagName === 'A' || 
+                node.parentElement.classList.contains('hidden') ||
+                node.parentElement.classList.contains('highlight')) {
+              return NodeFilter.FILTER_REJECT;
+            }
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+      );
+      
+      const textNodes = [];
+      let node;
+      while (node = walker.nextNode()) {
+        textNodes.push(node);
+      }
+      
+      // Highlight all text nodes
+      textNodes.forEach(highlightTextNode);
+    });
   }
 
   // Search input event listener
