@@ -324,13 +324,16 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
 
   // Function to highlight text in existing DOM elements
   function highlightExistingText() {
-    if (!searchTerm || searchTerm.trim() === '') {
-      // Remove all highlights
-      document.querySelectorAll('.highlight').forEach(el => {
-        const parent = el.parentNode;
+    // First, remove all existing highlights
+    document.querySelectorAll('.highlight').forEach(el => {
+      const parent = el.parentNode;
+      if (parent) {
         parent.replaceChild(document.createTextNode(el.textContent), el);
         parent.normalize();
-      });
+      }
+    });
+    
+    if (!searchTerm || searchTerm.trim() === '') {
       return;
     }
     
@@ -342,11 +345,15 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
     
     // Function to highlight text in a text node (in all cells, labels and values)
     function highlightTextNode(node) {
-      // Skip if already highlighted or in a link
-      if (node.parentElement.tagName === 'A' || 
-          node.parentElement.classList.contains('hidden') ||
-          node.parentElement.classList.contains('highlight')) {
-        return;
+      // Skip if in a link or hidden element
+      let parent = node.parentElement;
+      while (parent && parent !== document.body) {
+        if (parent.tagName === 'A' || 
+            parent.classList.contains('hidden') ||
+            parent.classList.contains('highlight')) {
+          return;
+        }
+        parent = parent.parentElement;
       }
       
       const text = node.textContent;
@@ -356,13 +363,13 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
       
       const fragment = document.createDocumentFragment();
       let lastIndex = 0;
-      let match;
       
       // Reset regex lastIndex
       regex.lastIndex = 0;
       
       // Get all matches first
       const matches = [];
+      let match;
       while ((match = regex.exec(text)) !== null) {
         matches.push({
           index: match.index,
@@ -372,19 +379,19 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
       }
       
       // Build fragment with highlights
-      matches.forEach(match => {
+      matches.forEach(m => {
         // Add text before match
-        if (match.index > lastIndex) {
-          fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+        if (m.index > lastIndex) {
+          fragment.appendChild(document.createTextNode(text.substring(lastIndex, m.index)));
         }
         
         // Add highlighted match
         const highlightSpan = document.createElement('span');
         highlightSpan.className = 'highlight';
-        highlightSpan.textContent = match.text;
+        highlightSpan.textContent = m.text;
         fragment.appendChild(highlightSpan);
         
-        lastIndex = match.index + match.length;
+        lastIndex = m.index + m.length;
       });
       
       // Add remaining text
@@ -392,23 +399,27 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
         fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
       }
       
-      if (fragment.childNodes.length > 0) {
+      if (fragment.childNodes.length > 0 && node.parentNode) {
         node.parentNode.replaceChild(fragment, node);
       }
     }
     
-    // Find all text nodes in all table cells (both labels and values)
-    const allCells = document.querySelectorAll('#content td');
+    // Find all table cells including nested ones (both labels and values)
+    // This includes cells in the main table and nested tables inside .genericEvent
+    const allCells = document.querySelectorAll('#content td, #content .genericEvent td');
     allCells.forEach(cell => {
+      // Skip if cell is empty or only contains links
+      if (!cell.textContent || cell.textContent.trim() === '') {
+        return;
+      }
+      
       const walker = document.createTreeWalker(
         cell,
         NodeFilter.SHOW_TEXT,
         {
           acceptNode: function(node) {
-            // Skip text nodes in links, hidden elements, or already highlighted
-            if (node.parentElement.tagName === 'A' || 
-                node.parentElement.classList.contains('hidden') ||
-                node.parentElement.classList.contains('highlight')) {
+            // Skip text nodes in links
+            if (node.parentElement && node.parentElement.tagName === 'A') {
               return NodeFilter.FILTER_REJECT;
             }
             return NodeFilter.FILTER_ACCEPT;
