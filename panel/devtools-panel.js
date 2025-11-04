@@ -163,7 +163,7 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                 </td>
                 <td colspan="2">
                 <div class="genericEvent">
-                <table  title="Please note that the mapping is not 100% correct since label/value are sometimes switched up. For confirmation, focus on f1 and f2 values, which are always correct">
+                <table>
                 <tbody>
                 <tr>
                     <td>customEventData.action (genericAction)</td>
