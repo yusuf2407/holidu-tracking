@@ -112,7 +112,8 @@ th {
 .mono {
   font-family: monospace;
   font-weight: 700;
-
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 .verbase {
   color: #D73900;
@@ -133,6 +134,29 @@ th {
   padding: 1rem;
   background-color: #F7F5F3;
   font-weight: 200;
+}
+
+.truncated-value, .full-value {
+  display: inline-block;
+  word-break: break-all;
+  transition: opacity 0.3s ease-in-out, max-height 0.3s ease-in-out;
+}
+
+.hidden {
+  display: none;
+}
+
+.expand-toggle {
+  color: #00809D;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 4px;
+  font-weight: 600;
+}
+
+.expand-toggle:hover {
+  color: #024251;
+  text-decoration: none;
 }
   </style>
     <script src="devtools-panel.js"></script>

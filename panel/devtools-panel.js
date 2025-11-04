@@ -2,6 +2,73 @@
 const abtests = [];
 let checked = false;
 
+// Helper function to format long values with truncation
+function formatLongValue(value, maxLength = 100) {
+    if (value == null || value === '') {
+        return { truncated: value, full: value, isLong: false };
+    }
+    const strValue = String(value);
+    if (strValue.length > maxLength) {
+        return {
+            truncated: strValue.substring(0, maxLength),
+            full: strValue,
+            isLong: true
+        };
+    }
+    return { truncated: strValue, full: strValue, isLong: false };
+}
+
+// Helper function to generate HTML for a value cell with expand/collapse
+function generateValueCell(value, fieldId) {
+    const formatted = formatLongValue(value);
+    if (!formatted.isLong) {
+        return `<td class="mono">${escapeHtml(formatted.truncated)}</td>`;
+    }
+    
+    const uniqueId = `value-${fieldId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `<td class="mono">
+        <span class="truncated-value" id="truncated-${uniqueId}">${escapeHtml(formatted.truncated)}... <a href="#" class="expand-toggle" data-target="${uniqueId}">Show more</a></span>
+        <span class="full-value hidden" id="full-${uniqueId}">${escapeHtml(formatted.full)} <a href="#" class="expand-toggle" data-target="${uniqueId}">Show less</a></span>
+    </td>`;
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    if (text == null) return '';
+    const str = String(text);
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// Function to attach expand/collapse click handlers
+function attachExpandHandlers(element) {
+    const toggleLinks = element.querySelectorAll('.expand-toggle');
+    toggleLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-target');
+            const truncatedEl = document.getElementById(`truncated-${targetId}`);
+            const fullEl = document.getElementById(`full-${targetId}`);
+            
+            if (truncatedEl && fullEl) {
+                if (truncatedEl.classList.contains('hidden')) {
+                    // Collapse
+                    truncatedEl.classList.remove('hidden');
+                    fullEl.classList.add('hidden');
+                } else {
+                    // Expand
+                    truncatedEl.classList.add('hidden');
+                    fullEl.classList.remove('hidden');
+                }
+            }
+        });
+    });
+}
+
 chrome.devtools.network.onRequestFinished.addListener( (req) => {
     if (req.request.url.includes('trackBatch')) {
         // if (req._resourceType === 'preflight') {
@@ -52,9 +119,9 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
             if (pushed.genericData) {
                 const event = {
                     genericValue: pushed.genericData.f2,
-                    genericCategory: pushed.customEventData.category,
+                    genericCategory: pushed.customEventData ? pushed.customEventData.category : '',
                     genericLabel: pushed.genericData.f1,
-                    genericAction: pushed.customEventData.action,
+                    genericAction: pushed.customEventData ? pushed.customEventData.action : '',
                 };
                 
                 // Build dynamic rows for all genericData fields except f1 and f2 (which are already displayed)
@@ -65,7 +132,7 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                         additionalFieldsRows += `
                 <tr>
                     <td>genericData.${key}</td>
-                    <td class="mono">${pushed.genericData[key]}</td>
+                    ${generateValueCell(pushed.genericData[key], key)}
                 </tr>`;
                     }
                 });
@@ -81,19 +148,19 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                 <tbody>
                 <tr>
                     <td>customEventData.action (genericAction)</td>
-                    <td class="mono">${event.genericAction}</td>
+                    ${generateValueCell(event.genericAction, 'action')}
                 </tr>
                 <tr>
                     <td>customEventData.category (genericCategory)</td>
-                    <td class="mono">${event.genericCategory}</td>
+                    ${generateValueCell(event.genericCategory, 'category')}
                 </tr>
                 <tr>
                     <td>genericData.f1 (genericLabel)</td>
-                    <td class="mono">${event.genericLabel}</td>
+                    ${generateValueCell(event.genericLabel, 'f1')}
                 </tr>
                 <tr>
                     <td>genericData.f2 (genericValue)</td>
-                    <td class="mono">${event.genericValue}</td>
+                    ${generateValueCell(event.genericValue, 'f2')}
                 </tr>
                 ${additionalFieldsRows}
                 </tbody>
@@ -101,6 +168,11 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                 </div>
                 </td>`
                 document.getElementById("content").insertBefore(esp, document.getElementById("content").firstChild);
+                
+                // Attach click handlers for expand/collapse after inserting the element
+                setTimeout(() => {
+                    attachExpandHandlers(esp);
+                }, 0);
 
             }
             if (pushed.customEventData && checked) {
