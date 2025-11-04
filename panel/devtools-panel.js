@@ -195,7 +195,7 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                     if (!excludedFields.includes(key) && pushed.genericData[key] != null && pushed.genericData[key] !== '') {
                         additionalFieldsRows += `
                 <tr>
-                    <td>genericData.${key}</td>
+                    <td>${highlightSearchTerm(`genericData.${key}`, searchTerm)}</td>
                     ${generateValueCell(pushed.genericData[key], key)}
                 </tr>`;
                     }
@@ -206,7 +206,7 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                 if (event.genericLabel != null && event.genericLabel !== '') {
                     f1Row = `
                 <tr>
-                    <td>genericData.f1 (genericLabel)</td>
+                    <td>${highlightSearchTerm('genericData.f1 (genericLabel)', searchTerm)}</td>
                     ${generateValueCell(event.genericLabel, 'f1')}
                 </tr>`;
                 }
@@ -215,7 +215,7 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                 if (event.genericValue != null && event.genericValue !== '') {
                     f2Row = `
                 <tr>
-                    <td>genericData.f2 (genericValue)</td>
+                    <td>${highlightSearchTerm('genericData.f2 (genericValue)', searchTerm)}</td>
                     ${generateValueCell(event.genericValue, 'f2')}
                 </tr>`;
                 }
@@ -230,11 +230,11 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                 <table>
                 <tbody>
                 <tr>
-                    <td>customEventData.action (genericAction)</td>
+                    <td>${highlightSearchTerm('customEventData.action (genericAction)', searchTerm)}</td>
                     ${generateValueCell(event.genericAction, 'action')}
                 </tr>
                 <tr>
-                    <td>customEventData.category (genericCategory)</td>
+                    <td>${highlightSearchTerm('customEventData.category (genericCategory)', searchTerm)}</td>
                     ${generateValueCell(event.genericCategory, 'category')}
                 </tr>
                 ${f1Row}
@@ -340,18 +340,8 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
     const escapedSearch = escapeRegex(searchTerm);
     const regex = new RegExp(`(${escapedSearch})`, 'gi');
     
-    // Function to highlight text in a text node (only in value cells, not labels)
+    // Function to highlight text in a text node (in all cells, labels and values)
     function highlightTextNode(node) {
-      // Only highlight in .mono cells (value cells), not in label cells
-      let cell = node.parentElement;
-      while (cell && cell.tagName !== 'TD') {
-        cell = cell.parentElement;
-      }
-      
-      if (!cell || !cell.classList.contains('mono')) {
-        return; // Don't highlight in label cells
-      }
-      
       // Skip if already highlighted or in a link
       if (node.parentElement.tagName === 'A' || 
           node.parentElement.classList.contains('hidden') ||
@@ -371,7 +361,18 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
       // Reset regex lastIndex
       regex.lastIndex = 0;
       
+      // Get all matches first
+      const matches = [];
       while ((match = regex.exec(text)) !== null) {
+        matches.push({
+          index: match.index,
+          length: match[0].length,
+          text: match[0]
+        });
+      }
+      
+      // Build fragment with highlights
+      matches.forEach(match => {
         // Add text before match
         if (match.index > lastIndex) {
           fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
@@ -380,11 +381,11 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
         // Add highlighted match
         const highlightSpan = document.createElement('span');
         highlightSpan.className = 'highlight';
-        highlightSpan.textContent = match[0];
+        highlightSpan.textContent = match.text;
         fragment.appendChild(highlightSpan);
         
-        lastIndex = match.index + match[0].length;
-      }
+        lastIndex = match.index + match.length;
+      });
       
       // Add remaining text
       if (lastIndex < text.length) {
@@ -396,9 +397,9 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
       }
     }
     
-    // Find all text nodes in visible cells (only in value cells with .mono class)
-    const monoCells = document.querySelectorAll('#content .mono');
-    monoCells.forEach(cell => {
+    // Find all text nodes in all table cells (both labels and values)
+    const allCells = document.querySelectorAll('#content td');
+    allCells.forEach(cell => {
       const walker = document.createTreeWalker(
         cell,
         NodeFilter.SHOW_TEXT,
