@@ -57,13 +57,13 @@ function formatLongValue(value, maxLength = 100) {
 function generateValueCell(value, fieldId) {
     const formatted = formatLongValue(value);
     if (!formatted.isLong) {
-        return `<td class="mono">${escapeHtml(formatted.truncated)}</td>`;
+        return `<td class="mono">${highlightSearchTerm(formatted.truncated, searchTerm)}</td>`;
     }
     
     const uniqueId = `value-${fieldId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     return `<td class="mono">
-        <span class="truncated-value" id="truncated-${uniqueId}">${escapeHtml(formatted.truncated)}... <a href="#" class="expand-toggle" data-target="${uniqueId}">Show more</a></span>
-        <span class="full-value hidden" id="full-${uniqueId}">${escapeHtml(formatted.full)} <a href="#" class="expand-toggle" data-target="${uniqueId}">Show less</a></span>
+        <span class="truncated-value" id="truncated-${uniqueId}">${highlightSearchTerm(formatted.truncated, searchTerm)}... <a href="#" class="expand-toggle" data-target="${uniqueId}">Show more</a></span>
+        <span class="full-value hidden" id="full-${uniqueId}">${highlightSearchTerm(formatted.full, searchTerm)} <a href="#" class="expand-toggle" data-target="${uniqueId}">Show less</a></span>
     </td>`;
 }
 
@@ -77,6 +77,30 @@ function escapeHtml(text) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+// Helper function to highlight matching search terms
+function highlightSearchTerm(text, searchTerm) {
+    if (!searchTerm || !text) {
+        return escapeHtml(String(text || ''));
+    }
+    
+    const escapedText = escapeHtml(String(text));
+    const searchLower = searchTerm.toLowerCase();
+    const textLower = String(text).toLowerCase();
+    
+    if (!textLower.includes(searchLower)) {
+        return escapedText;
+    }
+    
+    // Find all matches (case-insensitive)
+    const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
+    return escapedText.replace(regex, '<span class="highlight">$1</span>');
+}
+
+// Helper function to escape special regex characters
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // Function to attach expand/collapse click handlers
@@ -298,8 +322,107 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
     });
   }
 
+  // Function to highlight text in existing DOM elements
+  function highlightExistingText() {
+    if (!searchTerm || searchTerm.trim() === '') {
+      // Remove all highlights
+      document.querySelectorAll('.highlight').forEach(el => {
+        const parent = el.parentNode;
+        parent.replaceChild(document.createTextNode(el.textContent), el);
+        parent.normalize();
+      });
+      return;
+    }
+    
+    const searchLower = searchTerm.toLowerCase();
+    const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
+    
+    // Function to highlight text in a text node
+    function highlightTextNode(node) {
+      const text = node.textContent;
+      if (!text || text.toLowerCase().indexOf(searchLower) === -1) {
+        return;
+      }
+      
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+      let match;
+      
+      while ((match = regex.exec(text)) !== null) {
+        // Add text before match
+        if (match.index > lastIndex) {
+          fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+        }
+        
+        // Add highlighted match
+        const highlightSpan = document.createElement('span');
+        highlightSpan.className = 'highlight';
+        highlightSpan.textContent = match[0];
+        fragment.appendChild(highlightSpan);
+        
+        lastIndex = match.index + match[0].length;
+      }
+      
+      // Add remaining text
+      if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+      }
+      
+      node.parentNode.replaceChild(fragment, node);
+    }
+    
+    // Find all text nodes in visible cells (excluding links and hidden elements)
+    const walker = document.createTreeWalker(
+      document.getElementById('content'),
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: function(node) {
+          // Skip text nodes in links, hidden elements, or already highlighted
+          if (node.parentElement.tagName === 'A' || 
+              node.parentElement.classList.contains('hidden') ||
+              node.parentElement.classList.contains('highlight')) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+    
+    const textNodes = [];
+    let node;
+    while (node = walker.nextNode()) {
+      textNodes.push(node);
+    }
+    
+    // Highlight all text nodes
+    textNodes.forEach(highlightTextNode);
+  }
+
   // Search input event listener
-  document.getElementById("searchInput").addEventListener('input', function(e) {
+  const searchInput = document.getElementById("searchInput");
+  const clearSearchBtn = document.getElementById("clearSearch");
+  
+  searchInput.addEventListener('input', function(e) {
     searchTerm = e.target.value;
+    
+    // Show/hide clear button
+    if (searchTerm.trim() !== '') {
+      clearSearchBtn.style.display = 'flex';
+    } else {
+      clearSearchBtn.style.display = 'none';
+    }
+    
     filterExistingEvents();
+    highlightExistingText();
+  });
+  
+  // Clear search button click handler
+  clearSearchBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    searchInput.value = '';
+    searchTerm = '';
+    clearSearchBtn.style.display = 'none';
+    filterExistingEvents();
+    highlightExistingText();
+    searchInput.focus();
   });

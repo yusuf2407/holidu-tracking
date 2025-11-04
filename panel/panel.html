@@ -9,7 +9,10 @@
     <div class="tablecontainer">
       <div class="controls">
         <label><input type='checkbox' id="custevt">Show CustomEvents</label>
-        <input type="text" id="searchInput" class="search-input" placeholder="Search events...">
+        <div class="search-wrapper">
+          <input type="text" id="searchInput" class="search-input" placeholder="Search events...">
+          <button id="clearSearch" class="clear-search-btn" style="display: none;">×</button>
+        </div>
       </div>
     <table>
       <tbody id="content">
@@ -113,10 +116,17 @@ th {
   z-index: 10;
 }
 
-.search-input {
+.search-wrapper {
+  position: relative;
   flex: 1;
   max-width: 400px;
-  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 32px 8px 12px;
   border: 1px solid #D1CCC7;
   border-radius: 4px;
   font-size: 14px;
@@ -127,6 +137,32 @@ th {
   outline: none;
   border-color: #00809D;
   box-shadow: 0 0 0 2px rgba(0, 128, 157, 0.1);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.clear-search-btn:hover {
+  color: #000;
+}
+
+.highlight {
+  background-color: yellow;
+  font-weight: bold;
 }
 
 #content > tr:first-child {
