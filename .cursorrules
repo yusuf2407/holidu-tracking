@@ -1,0 +1,245 @@
+# HoliduTracking Chrome DevTools Extension - Cursor Rules
+
+## Project Overview
+This is a Chrome DevTools Extension (Manifest V3) for tracking and displaying events, A/B tests, and tracking data from Holidu website. The extension monitors network requests and displays them in a DevTools panel.
+
+## Technology Stack & Documentation References
+
+### 1. Chrome Extensions (Manifest V3)
+- **Official Documentation**: https://developer.chrome.com/docs/extensions/mv3/
+- **Migration Guide**: https://developer.chrome.com/docs/extensions/migrating/
+- **Manifest V3 Overview**: https://developer.chrome.com/docs/extensions/mv3/intro/
+- Always use Manifest V3 APIs and patterns
+- Service workers instead of background pages (if needed in future)
+- Use chrome.storage API instead of chrome.storage.local with proper permissions
+
+### 2. Chrome DevTools Extension APIs
+- **Official Documentation**: https://developer.chrome.com/docs/extensions/reference/devtools/
+- **DevTools APIs Reference**: https://developer.chrome.com/docs/extensions/reference/devtools_panels/
+- **Network API**: https://developer.chrome.com/docs/extensions/reference/devtools_network/
+- **Inspected Window API**: https://developer.chrome.com/docs/extensions/reference/devtools_inspectedWindow/
+- Always use chrome.devtools.* APIs for DevTools-specific functionality
+- Network monitoring: Use chrome.devtools.network.onRequestFinished
+- Panel creation: Use chrome.devtools.panels.create()
+- Inspected window access: Use chrome.devtools.inspectedWindow.eval() with caution
+
+### 3. JavaScript (ES6+ Vanilla JavaScript)
+- **MDN JavaScript Reference**: https://developer.mozilla.org/en-US/docs/Web/JavaScript
+- **JavaScript.info**: https://javascript.info/
+- Use modern ES6+ features (const/let, arrow functions, template literals, destructuring)
+- Avoid using var - always use const or let
+- Use arrow functions for callbacks
+- Prefer template literals over string concatenation
+- Use async/await for asynchronous operations when possible
+- Follow functional programming patterns where appropriate
+
+### 4. HTML5
+- **MDN HTML Reference**: https://developer.mozilla.org/en-US/docs/Web/HTML
+- **HTML5 Specification**: https://html.spec.whatwg.org/
+- Use semantic HTML5 elements
+- Ensure proper DOCTYPE declaration
+- Use meaningful element IDs and classes
+- Ensure accessibility attributes where needed
+
+### 5. CSS3
+- **MDN CSS Reference**: https://developer.mozilla.org/en-US/docs/Web/CSS
+- **CSS-Tricks**: https://css-tricks.com/
+- Use modern CSS features (Flexbox, Grid, CSS Variables)
+- Follow BEM-like naming conventions for classes
+- Use CSS variables for theming (color values)
+- Prefer flexbox/grid over floats
+- Use relative units (rem, em) where appropriate
+- Ensure responsive design considerations
+
+## Code Style & Conventions
+
+### JavaScript Style
+- Use camelCase for variables and functions
+- Use PascalCase for constructors/classes (if any)
+- Use descriptive variable names
+- Add comments for complex logic
+- Keep functions focused and single-purpose
+- Use early returns to reduce nesting
+- Handle errors gracefully
+
+### HTML Structure
+- Use semantic HTML elements
+- Proper indentation (2 spaces)
+- Close all tags properly
+- Use meaningful IDs and classes
+- Keep HTML structure clean and organized
+
+### CSS Organization
+- Group related styles together
+- Use consistent spacing (2 spaces indentation)
+- Keep styles scoped to avoid conflicts
+- Use comments to separate sections
+- Follow existing color scheme (#00809D, #024251, #D1CCC7)
+
+## Project-Specific Patterns
+
+### File Structure
+```
+/
+├── manifest.json          # Extension manifest (Manifest V3)
+├── html/
+│   └── devtools.html     # DevTools page entry point
+├── js/
+│   └── devtools.js       # DevTools panel creation script
+└── panel/
+    ├── panel.html        # Main panel UI
+    ├── devtools-panel.js # Panel logic and event handling
+    └── *.png            # Image assets
+```
+
+### Chrome DevTools Extension Patterns
+
+1. **Panel Creation**:
+   - Create panels in `js/devtools.js` using `chrome.devtools.panels.create()`
+   - Keep panel creation separate from panel logic
+
+2. **Network Monitoring**:
+   - Use `chrome.devtools.network.onRequestFinished` to monitor requests
+   - Filter requests by URL patterns (e.g., 'trackBatch')
+   - Parse JSON payloads from request.postData
+   - Handle errors gracefully (404, network failures)
+
+3. **DOM Manipulation**:
+   - Use `document.createElement()` for dynamic content
+   - Use `insertBefore()` for prepending content (current pattern)
+   - Attach event listeners after DOM insertion
+   - Use `setTimeout(0)` when needed for DOM updates
+
+4. **Event Handling**:
+   - Use `addEventListener()` instead of inline handlers
+   - Store references to DOM elements when reused
+   - Clean up event listeners if needed
+
+5. **Data Display**:
+   - Format JSON with proper indentation
+   - Handle long values with truncation/expansion
+   - Highlight search terms in displayed content
+   - Support filtering and searching
+
+### Color Scheme (Maintain Consistency)
+- Primary: `#00809D` (Holidu teal)
+- Primary Dark: `#024251`
+- Secondary: `#D1CCC7` (borders)
+- Error: `#D73900` (BASE version)
+- Success: `#39BF16` (NEW version)
+- Background: `#F7F5F3`, `#f2f2f2`, `#fbfbfb`
+
+## Security & Best Practices
+
+### Chrome Extension Security
+- **Security Best Practices**: https://developer.chrome.com/docs/extensions/mv3/security/
+- Never use `eval()` directly - use `chrome.devtools.inspectedWindow.eval()` only when necessary
+- Sanitize user input before displaying
+- Escape HTML content to prevent XSS
+- Use Content Security Policy compliant code
+- Validate all data from network requests
+
+### Code Quality
+- Escape HTML using helper functions (escapeHtml)
+- Handle null/undefined values explicitly
+- Validate data before processing
+- Use try-catch for JSON parsing
+- Check for existence before accessing properties
+
+## Feature Implementation Guidelines
+
+### Adding New Event Types
+1. Check for event type in payload
+2. Create render function following existing patterns
+3. Add filtering/search support
+4. Handle edge cases (null, empty, malformed data)
+5. Maintain consistent UI styling
+
+### Adding New Filters
+1. Update `matchesSearch()` function if needed
+2. Update `filterExistingEvents()` function
+3. Ensure highlighting works with new filters
+4. Test with various data types
+
+### UI Enhancements
+1. Follow existing color scheme
+2. Use consistent spacing and padding
+3. Maintain responsive behavior
+4. Ensure accessibility (keyboard navigation, screen readers)
+5. Test in DevTools panel context
+
+## Error Handling
+
+- Always handle network request errors
+- Validate JSON parsing with try-catch
+- Check for null/undefined before property access
+- Display user-friendly error messages
+- Log errors to console for debugging
+
+## Performance Considerations
+
+- Minimize DOM manipulations
+- Use efficient selectors
+- Debounce search input if needed
+- Limit displayed items if list grows large
+- Clean up event listeners on panel close
+
+## Testing Considerations
+
+- Test with various network request scenarios
+- Test with malformed/invalid data
+- Test search functionality with special characters
+- Test filtering with different event types
+- Test UI responsiveness
+
+## Documentation References (Always Check Latest)
+
+### Chrome Extensions
+- **Getting Started**: https://developer.chrome.com/docs/extensions/mv3/getstarted/
+- **API Reference**: https://developer.chrome.com/docs/extensions/reference/
+- **Samples**: https://github.com/GoogleChrome/chrome-extensions-samples
+
+### Chrome DevTools Extensions
+- **DevTools Extension Tutorial**: https://developer.chrome.com/docs/extensions/mv3/devtools/
+- **DevTools API Examples**: https://github.com/GoogleChrome/chrome-extensions-samples/tree/main/api/devtools
+
+### Web Standards
+- **MDN Web Docs**: https://developer.mozilla.org/
+- **Web.dev**: https://web.dev/
+- **Can I Use**: https://caniuse.com/ (for feature compatibility)
+
+## Migration Notes
+
+- This project uses Manifest V3 (no background pages)
+- All APIs should be Manifest V3 compatible
+- Avoid deprecated APIs
+- Check Chrome Extension documentation for breaking changes
+
+## Future Enhancements Considerations
+
+- Consider adding export functionality for tracked events
+- Consider adding time-based filtering
+- Consider adding event grouping/categorization
+- Consider adding statistics/analytics view
+- Consider adding configuration options
+
+## Code Review Checklist
+
+Before submitting code, ensure:
+- [ ] Follows Manifest V3 patterns
+- [ ] Uses latest Chrome DevTools APIs
+- [ ] Escapes HTML properly
+- [ ] Handles errors gracefully
+- [ ] Maintains consistent code style
+- [ ] Updates documentation if needed
+- [ ] Tests with various scenarios
+- [ ] Follows existing patterns
+- [ ] Uses appropriate Chrome APIs
+- [ ] Maintains security best practices
+
+---
+
+**IMPORTANT**: Always refer to the latest official documentation before implementing new features. Chrome Extension APIs and best practices evolve, so verify current recommendations before making changes.
+
+**Last Updated**: Check Chrome Extension documentation for latest Manifest V3 updates and DevTools API changes.
+
