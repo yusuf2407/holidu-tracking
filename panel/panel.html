@@ -14,6 +14,7 @@
           <input type="text" id="searchInput" class="search-input" placeholder="Search events...">
           <button id="clearSearch" class="clear-search-btn" style="display: none;"><img src="close.png" width="16"/></button>
         </div>
+        <label><input type='checkbox' id="impressionSnapshot">Show ImpressionSnapshot</label>
       </div>
     <table>
       <tbody id="content">
@@ -230,6 +231,65 @@ th {
 .expand-toggle:hover {
   color: #024251;
   text-decoration: none;
+}
+
+.snapshot-toggle {
+  color: #00809D;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.snapshot-toggle:hover {
+  color: #024251;
+  text-decoration: none;
+}
+
+.offer-link {
+  color: #00809D;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.offer-link:hover {
+  color: #024251;
+  text-decoration: underline;
+}
+
+.external-link-icon {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+  display: inline-block;
+  margin-left: 4px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.offer-link:hover .external-link-icon {
+  opacity: 1;
+}
+
+.snapshot-filter-input {
+  font-family: inherit;
+}
+
+.snapshot-filter-input:focus {
+  outline: none;
+  border-color: #00809D !important;
+  box-shadow: 0 0 0 2px rgba(0, 128, 157, 0.1);
+}
+
+.snapshot-filter-clear:hover {
+  opacity: 1 !important;
+}
+
+.snapshot-filter-container {
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
 }
   </style>
     <script src="devtools-panel.js"></script>

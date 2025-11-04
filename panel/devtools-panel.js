@@ -1,6 +1,7 @@
 
 const abtests = [];
 let checked = false;
+let impressionSnapshotChecked = false;
 let searchTerm = '';
 
 // Helper function to check if an event matches the search term
@@ -19,6 +20,27 @@ function matchesSearch(pushed, searchTerm) {
         if (pushed.customEventData.category && String(pushed.customEventData.category).toLowerCase().includes(searchLower)) {
             return true;
         }
+        // Search in snapshot array for impressionSnapshot events
+        if (pushed.customEventData.snapshot && Array.isArray(pushed.customEventData.snapshot)) {
+            for (let snapshotItem of pushed.customEventData.snapshot) {
+                if (snapshotItem && typeof snapshotItem === 'object') {
+                    for (let key in snapshotItem) {
+                        const value = snapshotItem[key];
+                        if (value != null && value !== '') {
+                            const valueStr = String(value).toLowerCase();
+                            if (valueStr.includes(searchLower)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Search in eventType
+    if (pushed.eventType && String(pushed.eventType).toLowerCase().includes(searchLower)) {
+        return true;
     }
     
     // Search in all genericData fields
@@ -42,7 +64,19 @@ function formatLongValue(value, maxLength = 100) {
     if (value == null || value === '') {
         return { truncated: value, full: value, isLong: false };
     }
-    const strValue = String(value);
+    
+    // Handle objects and arrays by stringifying them
+    let strValue;
+    if (typeof value === 'object' && value !== null) {
+        try {
+            strValue = JSON.stringify(value, null, 2);
+        } catch (e) {
+            strValue = String(value);
+        }
+    } else {
+        strValue = String(value);
+    }
+    
     if (strValue.length > maxLength) {
         return {
             truncated: strValue.substring(0, maxLength),
@@ -126,6 +160,286 @@ function attachExpandHandlers(element) {
             }
         });
     });
+    
+    // Attach snapshot expand/collapse handlers
+    const snapshotToggles = element.querySelectorAll('.snapshot-toggle');
+    snapshotToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const snapshotId = this.getAttribute('data-snapshot-id');
+            const snapshotContent = document.getElementById(`snapshot-content-${snapshotId}`);
+            const toggleText = this.querySelector('.toggle-text');
+            
+            if (snapshotContent) {
+                if (snapshotContent.classList.contains('hidden')) {
+                    snapshotContent.classList.remove('hidden');
+                    if (toggleText) toggleText.textContent = 'Hide Snapshot';
+                } else {
+                    snapshotContent.classList.add('hidden');
+                    if (toggleText) toggleText.textContent = 'Show Snapshot';
+                }
+            }
+        });
+    });
+}
+
+// Helper function to build offer URL
+function buildOfferUrl(offerId, baseUrl) {
+    if (!offerId || !baseUrl) return null;
+    
+    try {
+        const url = new URL(baseUrl);
+        const host = url.origin;
+        const params = new URLSearchParams();
+        
+        // Extract query params from base URL
+        const checkin = url.searchParams.get('checkin');
+        const checkout = url.searchParams.get('checkout');
+        const adults = url.searchParams.get('adults');
+        const children = url.searchParams.get('children');
+        
+        // Add params if they exist
+        if (checkin) params.append('checkin', checkin);
+        if (checkout) params.append('checkout', checkout);
+        if (adults) params.append('adults', adults);
+        if (children) params.append('children', children);
+        
+        const queryString = params.toString();
+        return `${host}/d/${offerId}${queryString ? '?' + queryString : ''}`;
+    } catch (e) {
+        return null;
+    }
+}
+
+// Helper function to get current page URL dynamically
+function getCurrentPageUrl(callback) {
+    chrome.devtools.inspectedWindow.eval('window.location.href', function(result, isException) {
+        if (!isException && result) {
+            callback(result);
+        } else {
+            callback(null);
+        }
+    });
+}
+
+// Helper function to handle offer link click with dynamic URL
+function handleOfferLinkClick(offerId, event) {
+    event.preventDefault();
+    getCurrentPageUrl(function(currentUrl) {
+        const offerUrl = buildOfferUrl(offerId, currentUrl);
+        if (offerUrl) {
+            window.open(offerUrl, '_blank');
+        }
+    });
+}
+
+// Helper function to render offerId cell with clickable link
+function generateOfferIdCell(offerId, baseUrl, fieldId) {
+    const highlightedOfferId = highlightSearchTerm(offerId, searchTerm);
+    const linkId = `offer-link-${fieldId}`;
+    
+    return `<td class="mono">
+        <a href="#" id="${linkId}" class="offer-link" data-offer-id="${escapeHtml(offerId)}" title="Open offer in new tab (uses current page URL)">
+            ${highlightedOfferId}
+            <svg class="external-link-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" title="Opens in new tab">
+                <path d="M10.5 1.5L1.5 10.5M10.5 1.5H6M10.5 1.5V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+    </td>`;
+}
+
+// Function to render impressionSnapshot event
+function renderImpressionSnapshotEvent(pushed) {
+    const customEventData = pushed.customEventData || {};
+    const snapshot = customEventData.snapshot || [];
+    const pageType = customEventData.pageType || '';
+    const baseUrl = pushed.href || ''; // Get URL from payload
+    const snapshotId = `snapshot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Build snapshot rows
+    let snapshotRows = '';
+    snapshot.forEach((snapshotItem, index) => {
+        if (!snapshotItem || typeof snapshotItem !== 'object') return;
+        
+        const offerId = snapshotItem.offerId || '';
+        let itemRows = '';
+        Object.keys(snapshotItem).forEach(key => {
+            const value = snapshotItem[key];
+            if (value != null && value !== '') {
+                // Special handling for offerId
+                if (key === 'offerId') {
+                    itemRows += `
+                <tr class="offer-data-row" data-offer-id="${offerId}" data-offer-index="${index}">
+                    <td>${highlightSearchTerm(key, searchTerm)}</td>
+                    ${generateOfferIdCell(value, baseUrl, `snapshot-${index}-${key}`)}
+                </tr>`;
+                } else {
+                    itemRows += `
+                <tr class="offer-data-row" data-offer-id="${offerId}" data-offer-index="${index}">
+                    <td>${highlightSearchTerm(key, searchTerm)}</td>
+                    ${generateValueCell(value, `snapshot-${index}-${key}`)}
+                </tr>`;
+                }
+            }
+        });
+        
+        snapshotRows += `
+        <tr class="offer-row" data-offer-id="${offerId}" data-offer-index="${index}">
+            <td colspan="2" style="padding-left: 20px;">
+                <strong>Offer ${index}:</strong>
+            </td>
+        </tr>
+        ${itemRows}`;
+    });
+    
+    const eventInfoRows = `
+    <tr>
+        <td>${highlightSearchTerm('eventType', searchTerm)}</td>
+        ${generateValueCell(pushed.eventType, 'eventType')}
+    </tr>
+    ${pageType ? `
+    <tr>
+        <td>${highlightSearchTerm('pageType', searchTerm)}</td>
+        ${generateValueCell(pageType, 'pageType')}
+    </tr>` : ''}
+    <tr>
+        <td>${highlightSearchTerm('Total Offers', searchTerm)}</td>
+        <td class="mono">${snapshot.length}</td>
+    </tr>`;
+    
+    const esp = document.createElement("tr");
+    esp.innerHTML = `
+    <td>
+        <img src="cogs.png" width="16"/>
+    </td>
+    <td colspan="2">
+        <div class="genericEvent">
+            <table>
+                <tbody>
+                    ${eventInfoRows}
+                    <tr>
+                        <td colspan="2" style="padding-top: 12px;">
+                            <a href="#" class="snapshot-toggle" data-snapshot-id="${snapshotId}">
+                                <span class="toggle-text">Show Snapshot</span> (${snapshot.length} offers)
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <div id="snapshot-content-${snapshotId}" class="hidden" style="padding-left: 20px; padding-top: 8px;">
+                                <div class="snapshot-filter-container" style="margin-bottom: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <input type="text" 
+                                               id="snapshot-filter-${snapshotId}" 
+                                               class="snapshot-filter-input" 
+                                               placeholder="Filter by OfferId..." 
+                                               style="flex: 1; padding: 6px 30px 6px 8px; border: 1px solid #D1CCC7; border-radius: 4px; font-size: 12px;">
+                                        <button class="snapshot-filter-clear" 
+                                                id="snapshot-filter-clear-${snapshotId}" 
+                                                style="display: none; background: none; border: none; cursor: pointer; padding: 4px; opacity: 0.6;" 
+                                                title="Clear filter">
+                                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="snapshot-filter-count" id="snapshot-filter-count-${snapshotId}" style="font-size: 11px; color: #666; display: none;"></div>
+                                </div>
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <tbody id="snapshot-offers-${snapshotId}">
+                                        ${snapshotRows}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </td>`;
+    
+    document.getElementById("content").insertBefore(esp, document.getElementById("content").firstChild);
+    
+    // Hide the row if checkbox is unchecked
+    if (!impressionSnapshotChecked) {
+        esp.style.display = 'none';
+    }
+    
+    // Attach click handlers for expand/collapse after inserting the element
+    setTimeout(() => {
+        attachExpandHandlers(esp);
+        
+        // Attach click handlers for offer links
+        const offerLinks = esp.querySelectorAll('.offer-link');
+        offerLinks.forEach(link => {
+            const offerId = link.getAttribute('data-offer-id');
+            if (offerId) {
+                link.addEventListener('click', function(e) {
+                    handleOfferLinkClick(offerId, e);
+                });
+            }
+        });
+        
+        // Attach filter functionality
+        const filterInput = document.getElementById(`snapshot-filter-${snapshotId}`);
+        const filterClear = document.getElementById(`snapshot-filter-clear-${snapshotId}`);
+        const filterCount = document.getElementById(`snapshot-filter-count-${snapshotId}`);
+        const offersTbody = document.getElementById(`snapshot-offers-${snapshotId}`);
+        
+        if (filterInput && filterClear && filterCount && offersTbody) {
+            // Store total count
+            const totalOffers = snapshot.length;
+            
+            // Filter function
+            function applyFilter() {
+                const filterValue = filterInput.value.trim().toLowerCase();
+                const offerRows = offersTbody.querySelectorAll('.offer-row');
+                let visibleCount = 0;
+                
+                offerRows.forEach(row => {
+                    const offerId = row.getAttribute('data-offer-id') || '';
+                    const offerIdLower = offerId.toLowerCase();
+                    const offerIndex = row.getAttribute('data-offer-index');
+                    
+                    let shouldShow = false;
+                    
+                    if (!filterValue || offerIdLower.includes(filterValue)) {
+                        shouldShow = true;
+                        visibleCount++;
+                    }
+                    
+                    // Show/hide this offer's header row
+                    row.style.display = shouldShow ? '' : 'none';
+                    
+                    // Show/hide all data rows for this offer
+                    const dataRows = offersTbody.querySelectorAll(`.offer-data-row[data-offer-index="${offerIndex}"]`);
+                    dataRows.forEach(dataRow => {
+                        dataRow.style.display = shouldShow ? '' : 'none';
+                    });
+                });
+                
+                // Update count display
+                if (filterValue) {
+                    filterCount.textContent = `Showing ${visibleCount} of ${totalOffers} offers`;
+                    filterCount.style.display = 'block';
+                    filterClear.style.display = 'block';
+                } else {
+                    filterCount.style.display = 'none';
+                    filterClear.style.display = 'none';
+                }
+            }
+            
+            // Input event listener
+            filterInput.addEventListener('input', applyFilter);
+            
+            // Clear button event listener
+            filterClear.addEventListener('click', function() {
+                filterInput.value = '';
+                applyFilter();
+                filterInput.focus();
+            });
+        }
+    }, 0);
 }
 
 chrome.devtools.network.onRequestFinished.addListener( (req) => {
@@ -139,7 +453,7 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
         //     <td colspan="2">trackbatch - Preflight</td>`
         //     document.getElementById("content").insertBefore(esp, document.getElementById("content").firstChild);
         // }
-        if (req.response.status === 404) {
+            if (req.response.status === 404) {
             console.log("hello")
             const esp=document.createElement("tr");
             esp.innerHTML=`
@@ -252,7 +566,17 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                 }, 0);
 
             }
-            if (pushed.customEventData && checked) {
+            // Handle impressionSnapshot events separately
+            if (pushed.eventType === 'impressionSnapshot' && pushed.customEventData) {
+                // Check if event matches search term
+                if (!matchesSearch(pushed, searchTerm)) {
+                    return; // Skip this event if it doesn't match search
+                }
+                
+                renderImpressionSnapshotEvent(pushed);
+            }
+            // Handle other customEventData events (non-impressionSnapshot)
+            else if (pushed.customEventData && pushed.eventType !== 'impressionSnapshot') {
                 // Check if event matches search term
                 if (!matchesSearch(pushed, searchTerm)) {
                     return; // Skip this event if it doesn't match search
@@ -266,6 +590,11 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                 <td colspan="2" class="mono">
                 <pre class="area">${JSON.stringify(pushed.customEventData, undefined, 4)}</pre></td>`
                 document.getElementById("content").insertBefore(esp, document.getElementById("content").firstChild);
+                
+                // Hide the row if checkbox is unchecked
+                if (!checked) {
+                    esp.style.display = 'none';
+                }
                 }
         })
 
@@ -281,29 +610,55 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
 
   document.getElementById("custevt").onchange = function(eb) {
     checked = eb.target.checked;
+    filterExistingEvents();
   };
 
-  // Function to filter existing events based on search term
+  document.getElementById("impressionSnapshot").onchange = function(eb) {
+    impressionSnapshotChecked = eb.target.checked;
+    filterExistingEvents();
+  };
+
+  // Function to filter existing events based on search term and event type
   function filterExistingEvents() {
     const allRows = document.querySelectorAll('#content > tr');
     allRows.forEach(row => {
       // Get the event data from the row
       const genericEventDiv = row.querySelector('.genericEvent');
       const customEventPre = row.querySelector('.area');
+      const snapshotToggle = row.querySelector('.snapshot-toggle');
       
       let shouldShow = false;
       
       if (genericEventDiv) {
-        // Extract text content from the generic event table
-        const tableText = genericEventDiv.textContent || genericEventDiv.innerText;
-        if (!searchTerm || tableText.toLowerCase().includes(searchTerm.toLowerCase())) {
-          shouldShow = true;
+        // Check if this is an impressionSnapshot event
+        if (snapshotToggle) {
+          // ImpressionSnapshot event - must check checkbox state
+          if (!impressionSnapshotChecked) {
+            shouldShow = false; // Hide if checkbox is unchecked
+          } else {
+            // Extract text content from the generic event table
+            const tableText = genericEventDiv.textContent || genericEventDiv.innerText;
+            if (!searchTerm || tableText.toLowerCase().includes(searchTerm.toLowerCase())) {
+              shouldShow = true;
+            }
+          }
+        } else {
+          // Regular generic event
+          const tableText = genericEventDiv.textContent || genericEventDiv.innerText;
+          if (!searchTerm || tableText.toLowerCase().includes(searchTerm.toLowerCase())) {
+            shouldShow = true;
+          }
         }
       } else if (customEventPre) {
-        // Extract text content from custom event pre
-        const preText = customEventPre.textContent || customEventPre.innerText;
-        if (!searchTerm || preText.toLowerCase().includes(searchTerm.toLowerCase())) {
-          shouldShow = true;
+        // Custom event rows - must also check checkbox state
+        if (!checked) {
+          shouldShow = false; // Hide if checkbox is unchecked
+        } else {
+          // Extract text content from custom event pre
+          const preText = customEventPre.textContent || customEventPre.innerText;
+          if (!searchTerm || preText.toLowerCase().includes(searchTerm.toLowerCase())) {
+            shouldShow = true;
+          }
         }
       } else {
         // A/B test rows - check the text content
