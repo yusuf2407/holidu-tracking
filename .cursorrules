@@ -237,6 +237,48 @@ Before submitting code, ensure:
 - [ ] Uses appropriate Chrome APIs
 - [ ] Maintains security best practices
 
+## Version Management
+
+### Version Bumping Rules (CRITICAL - ALWAYS FOLLOW)
+
+This project follows **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
+
+**IMPORTANT**: Always bump version based on feature type when making changes:
+
+1. **MAJOR Version (X.0.0)** - Breaking Changes
+   - Breaking changes requiring workflow updates
+   - Major API changes or removals
+   - Complete UI redesign
+   - Example: `2.0.0` → `3.0.0`
+
+2. **MINOR Version (0.X.0)** - New Features
+   - New features added (backward compatible)
+   - New event types supported
+   - New UI components or panels
+   - Enhanced functionality
+   - Example: `2.0.0` → `2.1.0`
+   - **This is the most common bump for new features**
+
+3. **PATCH Version (0.0.X)** - Bug Fixes & Minor Updates
+   - Bug fixes
+   - Minor UI improvements
+   - Performance optimizations
+   - Documentation updates
+   - Example: `2.0.0` → `2.0.1`
+
+### Version Update Checklist (MANDATORY)
+
+When bumping version, **ALWAYS** update:
+- ✅ `manifest.json` - Update `version` field
+- ✅ `CHANGELOG.md` - Add new version entry at top
+- ✅ `README.md` - Update "Current Version" section
+- ✅ Git commit message - Include version number
+
+### Current Version
+**Current**: `2.0.0`
+
+See `VERSIONING.md` for detailed versioning guidelines and examples.
+
 ---
 
 **IMPORTANT**: Always refer to the latest official documentation before implementing new features. Chrome Extension APIs and best practices evolve, so verify current recommendations before making changes.

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "HoliduTracking",
-  "version": "0.5",
+  "version": "2.0.0",
   "description": "DevTools extension to track and display Holidu events, A/B tests, and tracking data. Monitor network requests in real-time.",
   "author": "Marcel Suetterlin",
   "devtools_page": "html/devtools.html",

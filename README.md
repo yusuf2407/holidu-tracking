@@ -223,7 +223,7 @@ The extension monitors all network requests and filters for:
 
 ## Version
 
-Current Version: **0.5**
+Current Version: **2.0.0**
 
 See [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
 

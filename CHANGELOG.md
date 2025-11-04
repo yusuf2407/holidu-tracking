@@ -5,7 +5,18 @@ All notable changes to the HoliduTracking Chrome DevTools Extension will be docu
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5] - Current Version
+## [2.0.0] - Current Version
+
+### Changed
+- **Major Version Bump**: Upgraded to version 2.0.0 to reflect significant feature additions and improvements
+- Version numbering system standardized for future releases
+
+### Technical Improvements
+- Complete feature set from v0.5 consolidated into v2.0.0
+- Production-ready release with full documentation
+- Chrome Web Store submission ready
+
+## [0.5] - Previous Version
 
 ### Added
 - **Search Functionality**: Global search across all event fields
