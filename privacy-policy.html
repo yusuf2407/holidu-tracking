@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - HoliduTracking Chrome Extension</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f7f5f3;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #00809D;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            border-bottom: 3px solid #00809D;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: #024251;
+            font-size: 1.8em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        h3 {
+            color: #00809D;
+            font-size: 1.3em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .highlight {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-left: 4px solid #00809D;
+            margin: 20px 0;
+        }
+        
+        .no-data {
+            background-color: #f0f9f4;
+            padding: 15px;
+            border-left: 4px solid #39BF16;
+            margin: 20px 0;
+        }
+        
+        .meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #D1CCC7;
+        }
+        
+        .contact {
+            background-color: #f7f5f3;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 30px;
+        }
+        
+        a {
+            color: #00809D;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #D1CCC7;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Privacy Policy</h1>
+        <p class="meta">
+            <strong>HoliduTracking Chrome Extension</strong><br>
+            Last Updated: November 4, 2025<br>
+            Version: 0.5
+        </p>
+
+        <div class="highlight">
+            <p><strong>TL;DR:</strong> The HoliduTracking extension does <strong>NOT</strong> collect, store, or transmit any personal user data. All data processing happens locally on your device within the Chrome DevTools panel.</p>
+        </div>
+
+        <h2>1. Introduction</h2>
+        <p>
+            HoliduTracking is a Chrome DevTools Extension (Manifest V3) designed for developers and QA engineers working with Holidu's platform. This privacy policy explains how the extension handles data and respects your privacy.
+        </p>
+        <p>
+            This extension is developed by <strong>Marcel Suetterlin</strong> and is intended for use by developers and QA teams to monitor and analyze tracking events from Holidu websites.
+        </p>
+
+        <h2>2. Data Collection</h2>
+        
+        <div class="no-data">
+            <h3>✅ We Do NOT Collect Any Data</h3>
+            <p>The HoliduTracking extension does <strong>NOT</strong> collect, store, or transmit any of the following:</p>
+            <ul>
+                <li>❌ Personally identifiable information</li>
+                <li>❌ Health information</li>
+                <li>❌ Financial and payment information</li>
+                <li>❌ Authentication information</li>
+                <li>❌ Personal communications</li>
+                <li>❌ Location data</li>
+                <li>❌ Web browsing history</li>
+                <li>❌ User activity outside of DevTools</li>
+                <li>❌ Website content for storage purposes</li>
+            </ul>
+        </div>
+
+        <h2>3. What The Extension Does</h2>
+        <p>
+            The HoliduTracking extension operates entirely within the Chrome DevTools panel. Its functionality includes:
+        </p>
+        <ul>
+            <li><strong>Network Request Monitoring:</strong> Monitors network requests containing "trackBatch" in the URL when DevTools is open</li>
+            <li><strong>Event Display:</strong> Displays tracking events, A/B tests, and tracking data in a user-friendly format within the DevTools panel</li>
+            <li><strong>Local Processing:</strong> All data processing happens locally on your device - no data leaves your browser</li>
+        </ul>
+
+        <h2>4. APIs Used</h2>
+        <p>
+            The extension uses Chrome DevTools Extension APIs (implicitly granted by the `devtools_page` declaration):
+        </p>
+        <ul>
+            <li><strong>chrome.devtools.panels:</strong> Creates the DevTools panel for displaying events</li>
+            <li><strong>chrome.devtools.network:</strong> Monitors network requests from the inspected page only</li>
+            <li><strong>chrome.devtools.inspectedWindow:</strong> Accesses the current page URL only when user clicks offer links (to preserve URL parameters)</li>
+        </ul>
+        <p>
+            <strong>Important:</strong> These APIs only work when:
+        </p>
+        <ul>
+            <li>You explicitly open Chrome DevTools</li>
+            <li>You navigate to the HoliduTracking panel</li>
+            <li>The extension only sees data from the page you're currently inspecting</li>
+        </ul>
+
+        <h2>5. Data Handling</h2>
+        
+        <h3>Network Request Data</h3>
+        <ul>
+            <li>Only monitored when DevTools is open and HoliduTracking panel is active</li>
+            <li>Only displayed in the DevTools panel - never stored</li>
+            <li>No data is transmitted to any servers</li>
+            <li>All data is cleared when the panel is reloaded</li>
+            <li>Only requests from the currently inspected page are visible (not other tabs or browsing history)</li>
+        </ul>
+
+        <h3>Page URL</h3>
+        <ul>
+            <li>Only accessed when you click on offer links in impression snapshot events</li>
+            <li>Used only to construct offer URLs that preserve query parameters (checkin, checkout, adults, children)</li>
+            <li>Never stored or transmitted</li>
+            <li>Only accessed from the page currently being inspected</li>
+        </ul>
+
+        <h2>6. Third-Party Services</h2>
+        <p>
+            The HoliduTracking extension does <strong>NOT</strong> integrate with any third-party services, analytics platforms, or external APIs. It operates completely independently and does not send data to any servers.
+        </p>
+
+        <h2>7. Data Storage</h2>
+        <p>
+            The extension does <strong>NOT</strong> use any storage mechanisms:
+        </p>
+        <ul>
+            <li>❌ No localStorage</li>
+            <li>❌ No sessionStorage</li>
+            <li>❌ No chrome.storage API</li>
+            <li>❌ No cookies</li>
+            <li>❌ No IndexedDB</li>
+        </ul>
+        <p>
+            All event data displayed in the panel is temporary and cleared when:
+        </p>
+        <ul>
+            <li>The panel is reloaded</li>
+            <li>DevTools is closed</li>
+            <li>The extension is reloaded</li>
+        </ul>
+
+        <h2>8. User Control</h2>
+        <p>
+            You have complete control over the extension:
+        </p>
+        <ul>
+            <li>✅ Extension only works when you explicitly open DevTools</li>
+            <li>✅ You can close DevTools at any time to stop monitoring</li>
+            <li>✅ You can reload the panel to clear all displayed data</li>
+            <li>✅ You can uninstall the extension at any time</li>
+            <li>✅ All data processing is transparent and visible in the panel</li>
+        </ul>
+
+        <h2>9. Permissions</h2>
+        <p>
+            The HoliduTracking extension requests <strong>NO explicit permissions</strong> in its manifest. All functionality is provided through Chrome DevTools Extension APIs, which are automatically granted when you install a DevTools extension.
+        </p>
+        <p>
+            The extension does <strong>NOT</strong> request or use:
+        </p>
+        <ul>
+            <li>❌ host_permissions (no external URL access)</li>
+            <li>❌ tabs API (no tab manipulation)</li>
+            <li>❌ storage API (no data persistence)</li>
+            <li>❌ cookies API (no cookie access)</li>
+            <li>❌ webRequest API (uses DevTools network API instead)</li>
+            <li>❌ background scripts</li>
+            <li>❌ content scripts</li>
+        </ul>
+
+        <h2>10. Children's Privacy</h2>
+        <p>
+            The HoliduTracking extension is intended for use by developers and QA engineers. It does not knowingly collect any data from anyone, including children. Since the extension does not collect any data, this section is provided for completeness.
+        </p>
+
+        <h2>11. Changes to This Privacy Policy</h2>
+        <p>
+            We may update this privacy policy from time to time. The "Last Updated" date at the top of this page will reflect the most recent changes. We encourage you to review this privacy policy periodically.
+        </p>
+        <p>
+            If we make significant changes to how we handle data (though we currently don't collect any), we will notify users through the extension's update notes or other appropriate means.
+        </p>
+
+        <h2>12. Compliance</h2>
+        <p>
+            This extension complies with:
+        </p>
+        <ul>
+            <li>✅ Chrome Extension Manifest V3 requirements</li>
+            <li>✅ Chrome Web Store policies</li>
+            <li>✅ General Data Protection Regulation (GDPR) - as no data is collected</li>
+            <li>✅ California Consumer Privacy Act (CCPA) - as no data is collected</li>
+        </ul>
+
+        <h2>13. Contact Information</h2>
+        <div class="contact">
+            <p>
+                If you have any questions or concerns about this privacy policy or the HoliduTracking extension, please contact:
+            </p>
+            <p>
+                <strong>Developer:</strong> Marcel Suetterlin<br>
+                <strong>Email:</strong> <a href="mailto:developer@holidu.com">developer@holidu.com</a><br>
+                <strong>GitHub:</strong> <a href="https://github.com/yusuf2407/holidu-tracking" target="_blank">github.com/yusuf2407/holidu-tracking</a>
+            </p>
+        </div>
+
+        <h2>14. Summary</h2>
+        <div class="highlight">
+            <p>
+                <strong>In Summary:</strong> The HoliduTracking extension is a developer tool that operates entirely within Chrome DevTools. It does not collect, store, or transmit any personal data. All data processing happens locally on your device, and all displayed data is temporary and cleared when the panel is reloaded. Your privacy is our priority, and we've designed this extension to have zero impact on your privacy.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>
+                © 2025 HoliduTracking Extension | Version 0.5<br>
+                This privacy policy is effective as of November 4, 2025
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+

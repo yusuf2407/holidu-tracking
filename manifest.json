@@ -1,11 +1,14 @@
 {
-    "manifest_version": 3,
-  
-    "name": "HoliduTracking",
-    "version": "0.5",
-  
-    "description": "Show events and experiments",
-    "author": "Marcel Suetterlin",
-  
-    "devtools_page": "html/devtools.html"
-  }
+  "manifest_version": 3,
+  "name": "HoliduTracking",
+  "version": "0.5",
+  "description": "DevTools extension to track and display Holidu events, A/B tests, and tracking data. Monitor network requests in real-time.",
+  "author": "Marcel Suetterlin",
+  "devtools_page": "html/devtools.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": []
+}
