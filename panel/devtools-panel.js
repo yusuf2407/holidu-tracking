@@ -137,6 +137,25 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                     }
                 });
                 
+                // Build rows for f1 and f2 only if they have values
+                let f1Row = '';
+                if (event.genericLabel != null && event.genericLabel !== '') {
+                    f1Row = `
+                <tr>
+                    <td>genericData.f1 (genericLabel)</td>
+                    ${generateValueCell(event.genericLabel, 'f1')}
+                </tr>`;
+                }
+                
+                let f2Row = '';
+                if (event.genericValue != null && event.genericValue !== '') {
+                    f2Row = `
+                <tr>
+                    <td>genericData.f2 (genericValue)</td>
+                    ${generateValueCell(event.genericValue, 'f2')}
+                </tr>`;
+                }
+                
                 const esp=document.createElement("tr");
                 esp.innerHTML=`
                 <td>
@@ -154,14 +173,8 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                     <td>customEventData.category (genericCategory)</td>
                     ${generateValueCell(event.genericCategory, 'category')}
                 </tr>
-                <tr>
-                    <td>genericData.f1 (genericLabel)</td>
-                    ${generateValueCell(event.genericLabel, 'f1')}
-                </tr>
-                <tr>
-                    <td>genericData.f2 (genericValue)</td>
-                    ${generateValueCell(event.genericValue, 'f2')}
-                </tr>
+                ${f1Row}
+                ${f2Row}
                 ${additionalFieldsRows}
                 </tbody>
                 </table>
