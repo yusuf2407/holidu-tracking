@@ -55,10 +55,21 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                     genericCategory: pushed.customEventData.category,
                     genericLabel: pushed.genericData.f1,
                     genericAction: pushed.customEventData.action,
-                    genericF3: pushed.genericData.f3,
-                    genericF4: pushed.genericData.f4,
-                    genericF5: pushed.genericData.f5,
                 };
+                
+                // Build dynamic rows for all genericData fields except f1 and f2 (which are already displayed)
+                let additionalFieldsRows = '';
+                const excludedFields = ['f1', 'f2'];
+                Object.keys(pushed.genericData).forEach(key => {
+                    if (!excludedFields.includes(key) && pushed.genericData[key] != null && pushed.genericData[key] !== '') {
+                        additionalFieldsRows += `
+                <tr>
+                    <td>genericData.${key}</td>
+                    <td class="mono">${pushed.genericData[key]}</td>
+                </tr>`;
+                    }
+                });
+                
                 const esp=document.createElement("tr");
                 esp.innerHTML=`
                 <td>
@@ -84,24 +95,7 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                     <td>genericData.f2 (genericValue)</td>
                     <td class="mono">${event.genericValue}</td>
                 </tr>
-                ${event.genericF3 ? `
-                <tr>
-                    <td>genericData.f3</td>
-                    <td class="mono">${event.genericF3}</td>
-                </tr>`
-                : ``}
-                ${event.genericF4 ? `
-                <tr>
-                    <td>genericData.f4</td>
-                    <td class="mono">${event.genericF4}</td>
-                </tr>`
-                : ``}
-                ${event.genericF5 ? `
-                <tr>
-                    <td>genericData.f5</td>
-                    <td class="mono">${event.genericF5}</td>
-                </tr>`
-                : ``}
+                ${additionalFieldsRows}
                 </tbody>
                 </table>
                 </div>
