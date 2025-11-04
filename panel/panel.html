@@ -7,7 +7,10 @@
       </div>
     </div>
     <div class="tablecontainer">
-      <label><input type='checkbox' id="custevt">Show CustomEvents</label>
+      <div class="controls">
+        <label><input type='checkbox' id="custevt">Show CustomEvents</label>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search events...">
+      </div>
     <table>
       <tbody id="content">
       </tbody>
@@ -96,6 +99,31 @@ th {
 .tablecontainer {
   padding: 0;
   padding-top: 72px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px;
+  background-color: #f2f2f2;
+  border-bottom: 1px solid #D1CCC7;
+}
+
+.search-input {
+  flex: 1;
+  max-width: 400px;
+  padding: 8px 12px;
+  border: 1px solid #D1CCC7;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #00809D;
+  box-shadow: 0 0 0 2px rgba(0, 128, 157, 0.1);
 }
 
 #content > tr:first-child {

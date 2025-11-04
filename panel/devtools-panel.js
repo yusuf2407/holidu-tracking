@@ -1,6 +1,41 @@
 
 const abtests = [];
 let checked = false;
+let searchTerm = '';
+
+// Helper function to check if an event matches the search term
+function matchesSearch(pushed, searchTerm) {
+    if (!searchTerm || searchTerm.trim() === '') {
+        return true; // No search = show all
+    }
+    
+    const searchLower = searchTerm.toLowerCase().trim();
+    
+    // Search in customEventData
+    if (pushed.customEventData) {
+        if (pushed.customEventData.action && String(pushed.customEventData.action).toLowerCase().includes(searchLower)) {
+            return true;
+        }
+        if (pushed.customEventData.category && String(pushed.customEventData.category).toLowerCase().includes(searchLower)) {
+            return true;
+        }
+    }
+    
+    // Search in all genericData fields
+    if (pushed.genericData) {
+        for (let key in pushed.genericData) {
+            const value = pushed.genericData[key];
+            if (value != null && value !== '') {
+                const valueStr = String(value).toLowerCase();
+                if (valueStr.includes(searchLower)) {
+                    return true;
+                }
+            }
+        }
+    }
+    
+    return false;
+}
 
 // Helper function to format long values with truncation
 function formatLongValue(value, maxLength = 100) {
@@ -117,6 +152,11 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
                 });
             }
             if (pushed.genericData) {
+                // Check if event matches search term
+                if (!matchesSearch(pushed, searchTerm)) {
+                    return; // Skip this event if it doesn't match search
+                }
+                
                 const event = {
                     genericValue: pushed.genericData.f2,
                     genericCategory: pushed.customEventData ? pushed.customEventData.category : '',
@@ -189,6 +229,11 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
 
             }
             if (pushed.customEventData && checked) {
+                // Check if event matches search term
+                if (!matchesSearch(pushed, searchTerm)) {
+                    return; // Skip this event if it doesn't match search
+                }
+                
                 const esp=document.createElement("tr");
                 esp.innerHTML=`
                 <td>
@@ -213,3 +258,48 @@ chrome.devtools.network.onRequestFinished.addListener( (req) => {
   document.getElementById("custevt").onchange = function(eb) {
     checked = eb.target.checked;
   };
+
+  // Function to filter existing events based on search term
+  function filterExistingEvents() {
+    const allRows = document.querySelectorAll('#content > tr');
+    allRows.forEach(row => {
+      // Get the event data from the row
+      const genericEventDiv = row.querySelector('.genericEvent');
+      const customEventPre = row.querySelector('.area');
+      
+      let shouldShow = false;
+      
+      if (genericEventDiv) {
+        // Extract text content from the generic event table
+        const tableText = genericEventDiv.textContent || genericEventDiv.innerText;
+        if (!searchTerm || tableText.toLowerCase().includes(searchTerm.toLowerCase())) {
+          shouldShow = true;
+        }
+      } else if (customEventPre) {
+        // Extract text content from custom event pre
+        const preText = customEventPre.textContent || customEventPre.innerText;
+        if (!searchTerm || preText.toLowerCase().includes(searchTerm.toLowerCase())) {
+          shouldShow = true;
+        }
+      } else {
+        // A/B test rows - check the text content
+        const rowText = row.textContent || row.innerText;
+        if (!searchTerm || rowText.toLowerCase().includes(searchTerm.toLowerCase())) {
+          shouldShow = true;
+        }
+      }
+      
+      // Show or hide the row
+      if (shouldShow) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  // Search input event listener
+  document.getElementById("searchInput").addEventListener('input', function(e) {
+    searchTerm = e.target.value;
+    filterExistingEvents();
+  });
