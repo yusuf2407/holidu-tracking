@@ -1,0 +1,11 @@
+{
+    "manifest_version": 3,
+  
+    "name": "HoliduTracking",
+    "version": "0.5",
+  
+    "description": "Show events and experiments",
+    "author": "Marcel Suetterlin",
+  
+    "devtools_page": "html/devtools.html"
+  }
